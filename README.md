@@ -230,8 +230,6 @@ Main.hs
 
 ### 5. Create src/My/MyReverse.hs to test
 
-
-
 Let's work from the src directory for a while.
 
 ``` bash
@@ -273,7 +271,7 @@ main = do
 ```
 
 
-#### 5.3 ghc --make 
+#### 5.3 ghc \--make 
 
 This is a little detour showing the use of the ghc make facility to compile dependencies. I have to confess I used this approach to get the cabal files and module definitions correct.
 
@@ -283,6 +281,11 @@ $ ghc --make Main.hs
 [2 of 2] Compiling Main             ( Main.hs, Main.o )
 Linking Main ...
 ```
+
+See 
+ [Using ghc \--make](https://www.haskell.org/ghc/docs/latest/html/users_guide/modes.html#make-mode)
+from 
+[The Glorious Glasgow Haskell Compilation System User's Guide](https://www.haskell.org/ghc/docs/latest/html/users_guide/)
 
 #### 5.4 run
 
@@ -371,6 +374,8 @@ MyReverse.hi	MyReverse.hs	MyReverse.o
 
 ### 6. Create tests
 
+Let's overlook not creating the tests first. Better late than never?
+
 #### 6.1 Create test directories
 
 ``` bash
@@ -378,46 +383,194 @@ mkdir testsuite
 mkdir testsuite/tests
 ```
 
-
-#### 4.2 Create Main.hs
+#### 6.2 Create testsuite/tests/TestMyReverse.hs
 
 ``` haskell
--- Main.hs
-main = print "Hello World"
+{-# OPTIONS_GHC -F -pgmF htfpp #-}
+module Tests.TestMyReverse (htf_thisModulesTests) where
+
+import Test.Framework
+import My.MyReverse
+
+-- Some HUnit tests
+test_nonEmpty = do assertEqual [1] (myReverse [1])
+                   assertEqual [3,2,1] (myReverse [1,2,3])
+
+test_empty = assertEqual ([] :: [Int]) (myReverse [])
+
+
+-- some QuickQueck tests
+prop_reverse :: [Int] -> Bool
+prop_reverse xs = xs == (myReverse (myReverse xs))
+
+prop_reverseReplay =
+  withQCArgs (\a -> a { replay = read "Just (1007994632 40688,3)" })
+  prop_reverse
+
+
+-- main for adhoc execution of test
+main = htfMain htf_thisModulesTests
 ```
 
-#### 4.3 Edit empty-haskell-project-with-HTF.cabal
 
-```
-  hs-source-dirs:      src
+#### 6.3 Create testsuite/testmain.hs
+
+
+``` haskell
+{-# OPTIONS_GHC -F -pgmF htfpp #-}
+module Main where
+
+import Test.Framework
+import Test.Framework.BlackBoxTest
+import {-@ HTF_TESTS @-} Tests.TestMyReverse
+
+main = htfMain htf_importedTests
 ```
 
-Files at this point:
+
+#### 6.4 ghc \--make -i
+
+Set the search path for source modules using __`-isrc:testsuite`__ to search in directories __`src`__ and __`testsuite`__
+
+_the argument to -i is a colon separated list of directories with no whitespace_
 
 ``` bash
-$ ls -R
-LICENSE					Setup.hs				src
-README.md				empty-haskell-project-with-HTF.cabal
-
-./src:
-Main.hs
+$ ghc --make -isrc:testsuite testsuite/testmain.hs Tests.TestMyReverse
+[1 of 3] Compiling My.MyReverse     ( src/My/MyReverse.hs, src/My/MyReverse.o ) [flags changed]
+[2 of 3] Compiling Tests.TestMyReverse ( testsuite/Tests/TestMyReverse.hs, testsuite/Tests/TestMyReverse.o )
+[3 of 3] Compiling Main             ( testsuite/testmain.hs, testsuite/testmain.o )
+Linking testsuite/testmain ...
 ```
 
-#### 4.4  cabal configure build run
+#### 6.5 run
 
 ``` bash
-$ cabal configure
+$ testsuite/testmain 
+[TEST] Tests.TestMyReverse:nonEmpty (testsuite/Tests/TestMyReverse.hs:8)
+assertEqual failed at testsuite/Tests/TestMyReverse.hs:9
+* expected: "[3,2,1]"
+* but got:  "[3]"
+* diff:     ..."[3...,2,1]"......
+*** Failed! (20ms)
+
+[TEST] Tests.TestMyReverse:empty (testsuite/Tests/TestMyReverse.hs:11)
++++ OK (0ms)
+
+[TEST] Tests.TestMyReverse:reverse (testsuite/Tests/TestMyReverse.hs:16)
+Falsifiable (after 4 tests and 2 shrinks): 
+[0,0]
+Replay argument: "Just (744297811 2147483395,3)"
+*** Failed! (8ms)
+
+[TEST] Tests.TestMyReverse:reverseReplay (testsuite/Tests/TestMyReverse.hs:18)
+Falsifiable (after 1 test and 2 shrinks): 
+[0,0]
+Replay argument: "Just (1007994632 40688,3)"
+*** Failed! (1ms)
+
+* Tests:     4
+* Passed:    1
+* Pending:   0
+* Failures:  3
+* Errors:    0
+* Timed out: 0
+* Filtered:  0
+
+* Failures:
+  * Tests.TestMyReverse:reverseReplay (testsuite/Tests/TestMyReverse.hs:18)
+  * Tests.TestMyReverse:reverse (testsuite/Tests/TestMyReverse.hs:16)
+  * Tests.TestMyReverse:nonEmpty (testsuite/Tests/TestMyReverse.hs:8)
+
+Total execution time: 42ms
+```
+
+
+#### 6.6 Edit empty-haskell-project-with-HTF.cabal
+
+Add the following lines to `empty-haskell-project-with-HTF.cabal`
+
+```
+test-suite tests
+  type:              exitcode-stdio-1.0
+  main-is:           testmain.hs
+  other-modules:     Tests.TestMyReverse
+  build-depends:     base, HTF == 0.12.*
+  hs-source-dirs:    src, testsuite
+  default-language:  Haskell2010
+```
+
+#### 6.7  cabal configure \--enable-tests build test run
+
+``` bash
+$ cabal configure --enable-tests
 Resolving dependencies...
 Configuring empty-haskell-project-with-HTF-0.1.0.0...
 ```
 
 ``` bash
 $ cabal build
+$ cabal build
 Building empty-haskell-project-with-HTF-0.1.0.0...
 Preprocessing executable 'empty-haskell-project-with-HTF' for
 empty-haskell-project-with-HTF-0.1.0.0...
-[1 of 1] Compiling Main             ( src/Main.hs, dist/build/empty-haskell-project-with-HTF/empty-haskell-project-with-HTF-tmp/Main.o )
-Linking dist/build/empty-haskell-project-with-HTF/empty-haskell-project-with-HTF ...
+Preprocessing test suite 'tests' for empty-haskell-project-with-HTF-0.1.0.0...
+[1 of 3] Compiling My.MyReverse     ( src/My/MyReverse.hs, dist/build/tests/tests-tmp/My/MyReverse.o )
+[2 of 3] Compiling Tests.TestMyReverse ( testsuite/Tests/TestMyReverse.hs, dist/build/tests/tests-tmp/Tests/TestMyReverse.o )
+[3 of 3] Compiling Main             ( testsuite/testmain.hs, dist/build/tests/tests-tmp/Main.o )
+Linking dist/build/tests/tests ...
+```
+
+``` bash
+$ cabal test
+Building empty-haskell-project-with-HTF-0.1.0.0...
+Preprocessing executable 'empty-haskell-project-with-HTF' for
+empty-haskell-project-with-HTF-0.1.0.0...
+Preprocessing test suite 'tests' for empty-haskell-project-with-HTF-0.1.0.0...
+Running 1 test suites...
+Test suite tests: RUNNING...
+[TEST] Tests.TestMyReverse:nonEmpty (testsuite/Tests/TestMyReverse.hs:8)
+assertEqual failed at testsuite/Tests/TestMyReverse.hs:9
+* expected: "[3,2,1]"
+* but got:  "[3]"
+* diff:     
+C <..."[3...>C 
+F ,2,1
+C ]"<......>C 
+*** Failed! (10ms)
+
+[TEST] Tests.TestMyReverse:empty (testsuite/Tests/TestMyReverse.hs:11)
++++ OK (0ms)
+
+[TEST] Tests.TestMyReverse:reverse (testsuite/Tests/TestMyReverse.hs:16)
+Falsifiable (after 6 tests and 4 shrinks): 
+[0,0]
+Replay argument: "Just (1028570655 2147483393,5)"
+*** Failed! (5ms)
+
+[TEST] Tests.TestMyReverse:reverseReplay (testsuite/Tests/TestMyReverse.hs:18)
+Falsifiable (after 1 test and 2 shrinks): 
+[0,0]
+Replay argument: "Just (1007994632 40688,3)"
+*** Failed! (1ms)
+
+* Tests:     4
+* Passed:    1
+* Pending:   0
+* Failures:  3
+* Errors:    0
+* Timed out: 0
+* Filtered:  0
+
+* Failures:
+  * Tests.TestMyReverse:reverseReplay (testsuite/Tests/TestMyReverse.hs:18)
+  * Tests.TestMyReverse:reverse (testsuite/Tests/TestMyReverse.hs:16)
+  * Tests.TestMyReverse:nonEmpty (testsuite/Tests/TestMyReverse.hs:8)
+
+Total execution time: 25ms
+Test suite tests: FAIL
+Test suite logged to:
+dist/test/empty-haskell-project-with-HTF-0.1.0.0-tests.log
+0 of 1 test suites (0 of 1 test cases) passed.
 ```
 
 ``` bash
@@ -425,34 +578,29 @@ $ cabal run
 Preprocessing executable 'empty-haskell-project-with-HTF' for
 empty-haskell-project-with-HTF-0.1.0.0...
 "Hello World"
+"d"
 ```
 
-Files at this point:
+### 7. Fix src/My/MyReverse.hs and test again
+
+#### 7.1 Fix My/MyReverse.hs
 
 ``` bash
-$ ls -R
-LICENSE					Setup.hs				empty-haskell-project-with-HTF.cabal
-README.md				dist					src
-
-./dist:
-build			package.conf.inplace	setup-config
-
-./dist/build:
-autogen				empty-haskell-project-with-HTF
-
-./dist/build/autogen:
-Paths_empty_haskell_project_with_HTF.hs	cabal_macros.h
-
-./dist/build/empty-haskell-project-with-HTF:
-empty-haskell-project-with-HTF		empty-haskell-project-with-HTF-tmp
-
-./dist/build/empty-haskell-project-with-HTF/empty-haskell-project-with-HTF-tmp:
-Main.hi	Main.o
-
-./src:
-Main.hs
+mkdir My
 ```
 
+Create a broken reverse function. We will use it to demonstrate the testing framework.
+
+``` haskell
+-- My/MyReverse.hs
+
+module My.MyReverse (myReverse) where
+
+myReverse :: [a] -> [a]
+myReverse []     = []
+myReverse [x]    = [x]
+myReverse (x:xs) = myReverse xs
+```
 
 
 ### 6. Edit README.md
