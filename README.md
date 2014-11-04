@@ -509,7 +509,6 @@ Configuring empty-haskell-project-with-HTF-0.1.0.0...
 
 ``` bash
 $ cabal build
-$ cabal build
 Building empty-haskell-project-with-HTF-0.1.0.0...
 Preprocessing executable 'empty-haskell-project-with-HTF' for
 empty-haskell-project-with-HTF-0.1.0.0...
@@ -585,11 +584,12 @@ empty-haskell-project-with-HTF-0.1.0.0...
 
 #### 7.1 Fix My/MyReverse.hs
 
-``` bash
-mkdir My
-```
+Fix the broken reverse function.
 
-Create a broken reverse function. We will use it to demonstrate the testing framework.
+`myReverse (x:xs) = myReverse xs`
+ should be 
+`myReverse (x:xs) = myReverse xs ++ [x]`
+
 
 ``` haskell
 -- My/MyReverse.hs
@@ -599,15 +599,87 @@ module My.MyReverse (myReverse) where
 myReverse :: [a] -> [a]
 myReverse []     = []
 myReverse [x]    = [x]
-myReverse (x:xs) = myReverse xs
+myReverse (x:xs) = myReverse xs ++ [x]
+```
+
+#### 7.2  cabal configure \--enable-tests build test run
+
+``` bash
+$ cabal configure --enable-tests
+Resolving dependencies...
+Configuring empty-haskell-project-with-HTF-0.1.0.0...
+```
+
+``` bash
+$ cabal build
+Building empty-haskell-project-with-HTF-0.1.0.0...
+Preprocessing executable 'empty-haskell-project-with-HTF' for
+empty-haskell-project-with-HTF-0.1.0.0...
+[1 of 2] Compiling My.MyReverse     ( src/My/MyReverse.hs, dist/build/empty-haskell-project-with-HTF/empty-haskell-project-with-HTF-tmp/My/MyReverse.o )
+Linking dist/build/empty-haskell-project-with-HTF/empty-haskell-project-with-HTF ...
+Preprocessing test suite 'tests' for empty-haskell-project-with-HTF-0.1.0.0...
+[1 of 3] Compiling My.MyReverse     ( src/My/MyReverse.hs, dist/build/tests/tests-tmp/My/MyReverse.o )
+Linking dist/build/tests/tests ...
+```
+
+``` bash
+$ cabal test
+Building empty-haskell-project-with-HTF-0.1.0.0...
+Preprocessing executable 'empty-haskell-project-with-HTF' for
+empty-haskell-project-with-HTF-0.1.0.0...
+Preprocessing test suite 'tests' for empty-haskell-project-with-HTF-0.1.0.0...
+Running 1 test suites...
+Test suite tests: RUNNING...
+Test suite tests: PASS
+Test suite logged to:
+dist/test/empty-haskell-project-with-HTF-0.1.0.0-tests.log
+1 of 1 test suites (1 of 1 test cases) passed.
+```
+
+``` bash
+$ cat dist/test/empty-haskell-project-with-HTF-0.1.0.0-tests.log
+Test suite tests: RUNNING...
+[TEST] Tests.TestMyReverse:nonEmpty (testsuite/Tests/TestMyReverse.hs:8)
++++ OK (0ms)
+
+[TEST] Tests.TestMyReverse:empty (testsuite/Tests/TestMyReverse.hs:11)
++++ OK (0ms)
+
+[TEST] Tests.TestMyReverse:reverse (testsuite/Tests/TestMyReverse.hs:16)
+Passed 100 tests.
++++ OK (31ms)
+
+[TEST] Tests.TestMyReverse:reverseReplay (testsuite/Tests/TestMyReverse.hs:18)
+Passed 100 tests.
++++ OK (5ms)
+
+* Tests:     4
+* Passed:    4
+* Pending:   0
+* Failures:  0
+* Errors:    0
+* Timed out: 0
+* Filtered:  0
+
+Total execution time: 41ms
+Test suite tests: PASS
+Test suite logged to: dist/test/empty-haskell-project-with-HTF-0.1.0.0-tests.log
+```
+
+``` bash
+$ cabal run
+Preprocessing executable 'empty-haskell-project-with-HTF' for
+empty-haskell-project-with-HTF-0.1.0.0...
+"Hello World"
+"dlroW olleH"
 ```
 
 
-### 6. Edit README.md
+### 8. Edit README.md
 
 Edit this document!
 
-### 7. Commit and Sync to GitHub
+### 9. Commit and Sync to GitHub
 
 Using one of these methods:
 

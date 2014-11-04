@@ -5,4 +5,4 @@ module My.MyReverse (myReverse) where
 myReverse :: [a] -> [a]
 myReverse []     = []
 myReverse [x]    = [x]
-myReverse (x:xs) = myReverse xs
+myReverse (x:xs) = myReverse xs ++ [x]
