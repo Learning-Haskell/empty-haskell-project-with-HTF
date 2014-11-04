@@ -14,7 +14,7 @@ TODO
 
 ## How it was created
 
-Steps...
+Follow these steps as a tutorial on creating a basic project with a source module and tests.
 
 
 ### 1. Create the repository in GitHub
@@ -228,34 +228,156 @@ Main.hi	Main.o
 Main.hs
 ```
 
-### 4. Create src/Main.hs
+### 5. Create src/My/MyReverse.hs to test
 
-#### Folder Structure
 
-```
-app/		-- root dir - for example empty-haskell-project-with-HTF 
-  src/		-- For keeping the sourcecode
-    Main.lhs	-- The main-module
-  testsuite/	-- Contains the testing stuff
-    runtests.sh	-- Will run all tests
-    tests/	-- For unit and property based testing
-  dist/		-- Directory containing what end-users should get
-    build/	-- Contains binary files, created by cabal
-    doc/	-- The haddock documentation goes here, created by cabal
-  .git/        	-- git repository
-  README.md	-- Textfile with short introduction of the project
-  LICENSE	-- Textfile describing licensing terms for this project
-  app.cabal	-- Project-description-file for cabal
-  Setup.hs	-- Program for running cabal commands
-```
 
-from [Structure of a Haskell project - HaskellWiki](https://www.haskell.org/haskellwiki/Structure_of_a_Haskell_project)
-
-#### 4.1 Create src folder
+Let's work from the src directory for a while.
 
 ``` bash
-mkdir src
+cd src
 ```
+
+#### 5.1 Create My/MyReverse.hs
+
+``` bash
+mkdir My
+```
+
+Create a broken reverse function. We will use it to demonstrate the testing framework.
+
+``` haskell
+-- My/MyReverse.hs
+
+module My.MyReverse (myReverse) where
+
+myReverse :: [a] -> [a]
+myReverse []     = []
+myReverse [x]    = [x]
+myReverse (x:xs) = myReverse xs
+```
+
+#### 5.2 Edit Main.hs
+
+Import `My.MyReverse` and use it.
+
+``` haskell
+-- Main.hs
+module Main where
+
+import My.MyReverse
+
+main = do
+        print "Hello World"
+        print (myReverse "Hello World")
+```
+
+
+#### 5.3 ghc --make 
+
+This is a little detour showing the use of the ghc make facility to compile dependencies. I have to confess I used this approach to get the cabal files and module definitions correct.
+
+``` bash
+$ ghc --make Main.hs 
+[1 of 2] Compiling My.MyReverse     ( My/MyReverse.hs, My/MyReverse.o )
+[2 of 2] Compiling Main             ( Main.hs, Main.o )
+Linking Main ...
+```
+
+#### 5.4 run
+
+Let's give it a run. We should notice that reverse is not doing what we should expect, but it compiles and runs.
+
+``` bash
+$ ./Main
+"Hello World"
+"d"
+```
+
+Files in src at this point:
+
+``` bash
+$ ls -R
+Main	Main.hi	Main.hs	Main.o	My
+
+./My:
+MyReverse.hi	MyReverse.hs	MyReverse.o
+```
+
+#### 5.5 cabal configure build run
+
+Change back to the project root directory
+
+``` bash
+cd ..
+```
+
+
+``` bash
+$ cabal configure
+Resolving dependencies...
+Configuring empty-haskell-project-with-HTF-0.1.0.0...
+```
+
+``` bash
+$ cabal build
+Building empty-haskell-project-with-HTF-0.1.0.0...
+Preprocessing executable 'empty-haskell-project-with-HTF' for
+empty-haskell-project-with-HTF-0.1.0.0...
+[1 of 2] Compiling My.MyReverse     ( src/My/MyReverse.hs, dist/build/empty-haskell-project-with-HTF/empty-haskell-project-with-HTF-tmp/My/MyReverse.o )
+[2 of 2] Compiling Main             ( src/Main.hs, dist/build/empty-haskell-project-with-HTF/empty-haskell-project-with-HTF-tmp/Main.o )
+Linking dist/build/empty-haskell-project-with-HTF/empty-haskell-project-with-HTF ...
+```
+
+``` bash
+$ cabal run
+Preprocessing executable 'empty-haskell-project-with-HTF' for
+empty-haskell-project-with-HTF-0.1.0.0...
+"Hello World"
+"d"
+```
+
+Files at this point:
+
+``` bash
+$ ls -R
+LICENSE					Setup.hs				empty-haskell-project-with-HTF.cabal
+README.md				dist					src
+
+./dist:
+build			package.conf.inplace	setup-config
+
+./dist/build:
+autogen				empty-haskell-project-with-HTF
+
+./dist/build/autogen:
+Paths_empty_haskell_project_with_HTF.hs	cabal_macros.h
+
+./dist/build/empty-haskell-project-with-HTF:
+empty-haskell-project-with-HTF		empty-haskell-project-with-HTF-tmp
+
+./dist/build/empty-haskell-project-with-HTF/empty-haskell-project-with-HTF-tmp:
+Main.hi	Main.o	My
+
+./dist/build/empty-haskell-project-with-HTF/empty-haskell-project-with-HTF-tmp/My:
+MyReverse.hi	MyReverse.o
+
+./src:
+Main	Main.hi	Main.hs	Main.o	My
+
+./src/My:
+MyReverse.hi	MyReverse.hs	MyReverse.o
+```
+
+### 6. Create tests
+
+#### 6.1 Create test directories
+
+``` bash
+mkdir testsuite
+mkdir testsuite/tests
+```
+
 
 #### 4.2 Create Main.hs
 

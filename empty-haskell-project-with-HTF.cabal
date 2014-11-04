@@ -18,7 +18,7 @@ cabal-version:       >=1.10
 
 executable empty-haskell-project-with-HTF
   main-is:             Main.hs
-  -- other-modules:
+  -- other-modules:    
   -- other-extensions:
   build-depends:       base >=4.7 && <4.8
   hs-source-dirs:      src
