@@ -10,7 +10,88 @@ and uses some of the [Structure of a Haskell project](https://www.haskell.org/ha
 
 ## How you can use it
 
-TODO
+### Create a repository to work in
+
+``` bash
+...
+```
+
+### Get the files from this GitHub repository
+
+[Download ZIP](https://github.com/Learning-Haskell/empty-haskell-project-with-HTF/archive/master.zip)
+
+### Rename the cabal file
+
+``` bash
+mv empty-haskell-project-with-HTF.cabal your-project-name.cabal
+```
+
+### Edit the cabal file to reflect your name, synopsis, homepage, license, ...
+
+```
+name:                your-project-name
+version:             0.1.0.0
+synopsis:            An empty Haskell project ready for Haskell Test Framework
+-- description:
+homepage:            https://github.com/Learning-Haskell/empty-haskell-project-with-HTF
+license:             CC0-1.0-Universal
+license-file:        LICENSE
+author:              Ross Kendle
+maintainer:          ross.kendle@gmail.com
+```
+
+### cabal configure \--enable-tests build test run
+
+``` bash
+$ cabal configure --enable-tests
+Resolving dependencies...
+Configuring your-project-name-0.1.0.0...
+```
+
+``` bash
+$ cabal build
+Building your-project-name-0.1.0.0...
+Preprocessing executable 'empty-haskell-project-with-HTF' for
+your-project-name-0.1.0.0...
+[1 of 2] Compiling My.MyReverse     ( src/My/MyReverse.hs, dist/build/empty-haskell-project-with-HTF/empty-haskell-project-with-HTF-tmp/My/MyReverse.o )
+[2 of 2] Compiling Main             ( src/Main.hs, dist/build/empty-haskell-project-with-HTF/empty-haskell-project-with-HTF-tmp/Main.o )
+Linking dist/build/empty-haskell-project-with-HTF/empty-haskell-project-with-HTF ...
+Preprocessing test suite 'tests' for your-project-name-0.1.0.0...
+[1 of 3] Compiling My.MyReverse     ( src/My/MyReverse.hs, dist/build/tests/tests-tmp/My/MyReverse.o )
+[2 of 3] Compiling Tests.TestMyReverse ( testsuite/Tests/TestMyReverse.hs, dist/build/tests/tests-tmp/Tests/TestMyReverse.o )
+[3 of 3] Compiling Main             ( testsuite/testmain.hs, dist/build/tests/tests-tmp/Main.o )
+Linking dist/build/tests/tests ...
+```
+
+``` bash
+$ cabal test
+Building your-project-name-0.1.0.0...
+Preprocessing executable 'empty-haskell-project-with-HTF' for
+your-project-name-0.1.0.0...
+Preprocessing test suite 'tests' for your-project-name-0.1.0.0...
+Running 1 test suites...
+Test suite tests: RUNNING...
+Test suite tests: PASS
+Test suite logged to: dist/test/your-project-name-0.1.0.0-tests.log
+1 of 1 test suites (1 of 1 test cases) passed.
+```
+
+``` bash
+$ cabal run
+Preprocessing executable 'empty-haskell-project-with-HTF' for
+your-project-name-0.1.0.0...
+"Hello World"
+"dlroW olleH"
+```
+
+### Get Hacking
+
+Now you have a basic working project structure with tests get hacking!
+
+1. Write test code first
+2. Write application code so tests pass
+3. Commit
+4. Refactor, Rinse, Repeat
 
 ## How it was created
 
@@ -685,4 +766,9 @@ Using one of these methods:
 
 - GitHub Mac (or GitHub Windows)
 - ```git ...```
+
+## Other Haskell Test Frameworks
+There are other Haskell Test Frameworks such as:
+
+- [tasty](http://documentup.com/feuerbach/tasty)
 
